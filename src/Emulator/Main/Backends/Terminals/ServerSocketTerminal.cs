@@ -14,17 +14,17 @@ namespace Antmicro.Renode.Backends.Terminals
 {
     public static class ServerSocketTerminalExtensions
     {
-        public static void CreateServerSocketTerminal(this Emulation emulation, int port, string name, bool emitConfig = true)
+        public static void CreateServerSocketTerminal(this Emulation emulation, int port, string name, bool emitConfig = true, bool tcpNoDelay = false)
         {
-            emulation.ExternalsManager.AddExternal(new ServerSocketTerminal(port, emitConfig), name);
+            emulation.ExternalsManager.AddExternal(new ServerSocketTerminal(port, emitConfig, tcpNoDelay), name);
         }
     }
 
     public class ServerSocketTerminal : BackendTerminal, IDisposable
     {
-        public ServerSocketTerminal(int port, bool emitConfigBytes = true)
+        public ServerSocketTerminal(int port, bool emitConfigBytes = true,  bool tcpNoDelay = false)
         {
-            server = new SocketServerProvider(emitConfigBytes);
+            server = new SocketServerProvider(emitConfigBytes, tcpNoDelay);
             server.DataReceived += b => CallCharReceived((byte)b);
 
             server.Start(port);
