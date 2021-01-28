@@ -19,10 +19,11 @@ namespace Antmicro.Renode.Utilities
 {
     public class SocketServerProvider : IDisposable
     {
-        public SocketServerProvider(bool emitConfigBytes = true)
+        public SocketServerProvider(bool emitConfigBytes = true, bool tcpNoDelay = false)
         {
             queue = new BlockingCollection<byte>();
             this.emitConfigBytes = emitConfigBytes;
+            this.tcpNoDelay = tcpNoDelay;
         }
 
         public void Start(int port)
@@ -36,6 +37,7 @@ namespace Antmicro.Renode.Utilities
             {
                 throw new RecoverableException(e);
             }
+            server.NoDelay = tcpNoDelay;
             server.Listen(1);
 
             listenerThread = new Thread(ListenerThreadBody)
@@ -221,6 +223,7 @@ namespace Antmicro.Renode.Utilities
 
         private CancellationTokenSource writerCancellationToken;
         private bool emitConfigBytes;
+        private bool tcpNoDelay;
         private bool stopRequested;
         private Thread listenerThread;
         private Thread readerThread;
