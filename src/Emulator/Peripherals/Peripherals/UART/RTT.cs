@@ -29,10 +29,6 @@ namespace Antmicro.Renode.Peripherals.UART
             lock (receiveFifo)
             {
                 receiveFifo.Add(value);
-                if (receiveFifo.Count == dataSize.Value)
-                {
-                   Monitor.Pulse(receiveFifo); 
-                }
             }
         }
 
@@ -88,7 +84,7 @@ namespace Antmicro.Renode.Peripherals.UART
                 {
                     if (receiveFifo.Count < dataSize.Value)
                     {
-                        Monitor.Wait(receiveFifo);
+                        return;
                     }
 
                     machine.SystemBus.WriteBytes(receiveFifo.ToArray(), (ulong) (dataPtr.Value), 0, dataSize.Value);
@@ -101,7 +97,6 @@ namespace Antmicro.Renode.Peripherals.UART
         private IValueRegisterField dataPtr;
         private Transfer dataTransfer = Transfer.Done;
         private IValueRegisterField dataSize;
-        private readonly Queue<byte> receiveFifo2 = new Queue<byte>();
         private readonly List<byte> receiveFifo = new List<byte>();
 
         public uint BaudRate
