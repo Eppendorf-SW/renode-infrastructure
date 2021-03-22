@@ -153,6 +153,9 @@ namespace Antmicro.Renode.TAPHelper
 
         [DllImport("libc", EntryPoint = "open", SetLastError = true)]
         private static extern int open(IntPtr pathname, int flags);
+        
+        [DllImport("libc", EntryPoint = "open", SetLastError = true)]
+        public static extern int open(IntPtr pathname, int flags, int mode);
 
         [DllImport("libc", EntryPoint = "strcpy")]
         private static extern IntPtr strcpy(IntPtr dst, IntPtr src);
@@ -163,14 +166,48 @@ namespace Antmicro.Renode.TAPHelper
         [DllImport("libc", EntryPoint = "ioctl", SetLastError = true)]
         private static extern int ioctl(int d, int request, int a);
 
-        [DllImport("libc", EntryPoint = "close")]
-        private static extern int close(int fd);
+        [DllImport("libc", EntryPoint = "close", SetLastError = true)]
+        public static extern int close(int fd);
 
-        [DllImport("libc", EntryPoint = "write")]
-        private static extern int write(int fd, IntPtr buf, int count);
+        [DllImport("libc", EntryPoint = "write", SetLastError = true)]
+        public static extern int write(int fd, IntPtr buf, int count);
 
-        [DllImport("libc", EntryPoint = "read")]
-        private static extern int read(int fd, IntPtr buf, int count);
+        [DllImport("libc", EntryPoint = "read", SetLastError = true)]
+        public static extern int read(int fd, IntPtr buf, int count);
+        
+        [DllImport("libc", EntryPoint = "lseek", SetLastError = true)]
+        public static extern int lseek(int fd, long offset, int origin);
+
+        [DllImport("libc", SetLastError = true, EntryPoint="__fxstat")]
+        unsafe public static extern int _fstat (int ver, int fd, stat* stat);
+        
+        [DllImport("libc", EntryPoint = "isatty", SetLastError = true)]
+        public static extern int isatty(int fd);
+
+        public unsafe struct timespec
+        {
+            public long tv_sec;
+            public long tv_nsec;
+        }
+        
+        public unsafe struct stat //arch-x64 with types from Tmds.LibC
+        {
+            public ulong st_dev;
+            public ulong st_ino;
+            public ulong st_nlink;
+            public uint st_mode;
+            public uint st_uid;
+            public uint st_gid;
+            public uint  __pad0;
+            public ulong st_rdev;
+            public long st_size;
+            public long st_blksize;
+            public long st_blocks;
+            public timespec st_atim;
+            public timespec st_mtim;
+            public timespec st_ctim;
+            public fixed long __unused[3];
+        }
 
         #endregion
     }
