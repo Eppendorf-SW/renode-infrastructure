@@ -35,6 +35,9 @@
     <ConsolePause>false</ConsolePause>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="Mono.Posix" Condition=" $(CurrentPlatform) != 'Windows'" />
@@ -374,6 +377,7 @@
     <Compile Include="Peripherals\Sound\EOSS3_Voice.cs" />
     <Compile Include="Peripherals\Network\LiteX_Ethernet_CSR32.cs" />
     <Compile Include="Peripherals\Timers\LiteX_Timer_CSR32.cs" />
+    <Compile Include="Peripherals\Retarget\Syscalls.cs"/>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
