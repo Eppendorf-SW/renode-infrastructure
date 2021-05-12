@@ -184,6 +184,9 @@ namespace Antmicro.Renode.TAPHelper
         [DllImport("libc", EntryPoint = "isatty", SetLastError = true)]
         public static extern int isatty(int fd);
 
+        [DllImport("libc", EntryPoint = "chdir", SetLastError = true)]
+        public static extern int chdir(IntPtr pathname);
+
         public unsafe struct timespec
         {
             public long tv_sec;

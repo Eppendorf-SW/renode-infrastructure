@@ -66,6 +66,11 @@ namespace Antmicro.Renode.Peripherals.Retarget
                             case Call.Isatty:
                                 CallIsatty();
                                 break;
+                            case Call.Chdir:
+                                CallChdir();
+                                break;
+                            default:
+                                throw new Exception("Invalid syscall: " + call);
                         }
                     }
 
@@ -247,6 +252,23 @@ namespace Antmicro.Renode.Peripherals.Retarget
             call = Call.Done;
         }
 
+        private void CallChdir()
+        {
+            var data = machine.SystemBus.ReadBytes((ulong) buffer.Value, (int) bufferSize.Value);
+            IntPtr dataPtr = Marshal.AllocHGlobal(data.Length);
+            Marshal.Copy(data, 0, dataPtr, data.Length);
+
+            int current_status = LibC.chdir(dataPtr);
+            fd.Value = (uint) current_status;
+            if (current_status == -1)
+            {
+                SetErrorNumber();
+            }
+
+            Marshal.FreeHGlobal(dataPtr);
+            call = Call.Done;
+        }
+
         private void SetErrorNumber()
         {
             errno.Value = (uint)Marshal.GetLastWin32Error();
@@ -326,14 +348,15 @@ namespace Antmicro.Renode.Peripherals.Retarget
 
         private enum Call : uint
         {
-            Done = 9,
+            Done = 0,
             Open = 1,
             Close = 2,
             Write = 3,
             Read = 4,
             Lseek = 5,
             Fstat = 6, 
-            Isatty = 7
+            Isatty = 7,
+            Chdir = 8
         }
 
         private enum SyscallsRegister : long
