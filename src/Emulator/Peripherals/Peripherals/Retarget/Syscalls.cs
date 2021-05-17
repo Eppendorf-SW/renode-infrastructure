@@ -259,7 +259,7 @@ namespace Antmicro.Renode.Peripherals.Retarget
             Marshal.Copy(data, 0, dataPtr, data.Length);
 
             int current_status = LibC.chdir(dataPtr);
-            fd.Value = (uint) current_status;
+            status.Value = (uint) current_status;
             if (current_status == -1)
             {
                 SetErrorNumber();
