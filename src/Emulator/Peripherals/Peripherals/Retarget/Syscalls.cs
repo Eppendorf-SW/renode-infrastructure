@@ -23,6 +23,38 @@ namespace Antmicro.Renode.Peripherals.Retarget
     [AllowedTranslations(AllowedTranslation.WordToDoubleWord | AllowedTranslation.ByteToDoubleWord)]
     public class Syscalls : BasicDoubleWordPeripheral
     {
+        class DirectoryChanger : IDisposable
+        { 
+            // Track whether Dispose has been called.
+            private bool disposed = false;
+            private string old_dir;
+
+            public DirectoryChanger(string new_dir)
+            {
+                old_dir = Directory.GetCurrentDirectory();
+                Directory.SetCurrentDirectory(new_dir);
+            }
+            
+            public void Dispose()
+            {
+                Dispose(true);
+            }
+
+            protected virtual void Dispose(bool disposing)
+            {
+                if (!disposed)
+                {
+                    Directory.SetCurrentDirectory(old_dir);
+                    disposed = true;
+                }
+            }
+            
+            ~DirectoryChanger()
+            {
+                Dispose(false);
+            }
+        }
+        
         public Syscalls(Machine machine) : base(machine)
         {
             DefineRegisters();
@@ -139,15 +171,19 @@ namespace Antmicro.Renode.Peripherals.Retarget
             var data = machine.SystemBus.ReadBytes((ulong) buffer.Value, (int) bufferSize.Value);
             IntPtr dataPtr = Marshal.AllocHGlobal(data.Length);
             Marshal.Copy(data, 0, dataPtr, data.Length);
-            
-            int current_status = LibC.open(dataPtr, TransformOpenFlags(), (int)pmode.Value);
-            fd.Value = (uint) current_status;
-            if (current_status == -1)
+
+            using (var cd = new DirectoryChanger(CurrentDirectory))
             {
-                SetErrorNumber();
+                int current_status = LibC.open(dataPtr, TransformOpenFlags(), (int)pmode.Value);
+                fd.Value = (uint) current_status;
+                if (current_status == -1)
+                {
+                    SetErrorNumber();
+                }
+
+                Marshal.FreeHGlobal(dataPtr);
             }
-            
-            Marshal.FreeHGlobal(dataPtr);
+
             call = Call.Done;
         }
 
@@ -255,17 +291,16 @@ namespace Antmicro.Renode.Peripherals.Retarget
         private void CallChdir()
         {
             var data = machine.SystemBus.ReadBytes((ulong) buffer.Value, (int) bufferSize.Value);
-            IntPtr dataPtr = Marshal.AllocHGlobal(data.Length);
-            Marshal.Copy(data, 0, dataPtr, data.Length);
-
-            int current_status = LibC.chdir(dataPtr);
-            status.Value = (uint) current_status;
-            if (current_status == -1)
+            var new_dir = Encoding.ASCII.GetString(data, 0, data.Length - 1);
+            if (Directory.Exists(new_dir))
             {
-                SetErrorNumber();
+                // We cannot actually change the directoy here since renode itself requires a specific working directory.
+                CurrentDirectory = new_dir;
+                status.Value = 0;
+            } else {
+                status.Value = uint.MaxValue; // -1
+                errno.Value = 2; // ENOENT
             }
-
-            Marshal.FreeHGlobal(dataPtr);
             call = Call.Done;
         }
 
@@ -312,6 +347,8 @@ namespace Antmicro.Renode.Peripherals.Retarget
             Tuple.Create(131072, 131072), // O_NOFOLLOW
             Tuple.Create(64, 65536) // O_CREAT
         };
+
+        private string CurrentDirectory = "";
         
         private Call call = Call.Done;
         private IValueRegisterField fd;
